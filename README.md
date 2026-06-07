@@ -9,7 +9,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 
-[Live Demo](https://vexanode.cloud) · [Report a Bug](https://github.com/Ayushisingh09/VexaNode/issues) · [Request a Feature](https://github.com/Ayushisingh09/VexaNode/issues)
+[Live Demo](https://vexanode.cloud) · [Repository](https://github.com/pvpchnnnefhtfh-lgtm/Demo/tree/main) · [Report a Bug](https://github.com/pvpchnnnefhtfh-lgtm/Demo/issues) · [Request a Feature](https://github.com/pvpchnnnefhtfh-lgtm/Demo/issues)
 
 </div>
 
@@ -128,8 +128,8 @@ A PostgreSQL trigger (`on_auth_user_created`) automatically creates a `profiles`
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Ayushisingh09/VexaNode.git
-cd VexaNode
+git clone -b main https://github.com/pvpchnnnefhtfh-lgtm/Demo.git
+cd Demo
 
 # 2. Install dependencies
 npm install
