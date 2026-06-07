@@ -149,6 +149,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const isDevelopment = process.env.NODE_ENV === "development";
+  const isVercel = process.env.VERCEL === "1" || process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
 
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
@@ -233,7 +234,7 @@ export default function RootLayout({
                 <LayoutWrapper>
                   {children}
                   <SummerSalePopup />
-                  {!isDevelopment && <Analytics />}
+                  {!isDevelopment && isVercel && <Analytics />}
                 </LayoutWrapper>
               </AuthProvider>
               <CookieConsent />
