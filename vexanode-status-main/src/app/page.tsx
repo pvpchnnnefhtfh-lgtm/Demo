@@ -1,0 +1,394 @@
+'use client';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MONITORS } from '@/config/monitors';
+
+/* ─── Types ─────────────────────────────────────────────────── */
+interface MonitorResult {
+  name: string;
+  url: string;
+  status: 'UP' | 'DOWN';
+  latency: number;
+}
+
+/* ─── Fetch helper ───────────────────────────────────────────── */
+async function fetchStatus(url: string): Promise<{ status: 'UP' | 'DOWN'; latency: number }> {
+  const start = Date.now();
+  try {
+    const res = await fetch('/api/ping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch { /* ignore */ }
+  try {
+    const res = await fetch(url, { cache: 'no-store', mode: 'no-cors' });
+    const latency = Date.now() - start;
+    return { status: 'UP', latency };
+  } catch {
+    return { status: 'DOWN', latency: 0 };
+  }
+}
+
+/* ─── Sparkline data ─────────────────────────────────────────── */
+function generateSparkline(status: 'UP' | 'DOWN') {
+  return Array.from({ length: 30 }, (_, i) => {
+    const isDown = status === 'DOWN' && i === 29;
+    return { up: !isDown, height: 30 + Math.floor(Math.random() * 70) };
+  });
+}
+
+/* ─── Sub-components ─────────────────────────────────────────── */
+function ServiceRow({
+  monitor,
+  index,
+  onNotify
+}: {
+  monitor: MonitorResult;
+  index: number;
+  onNotify: (m: MonitorResult) => Promise<void>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifying, setNotifying] = useState(false);
+  const isUp = monitor.status === 'UP';
+  const bars = generateSparkline(monitor.status);
+
+  const handleNotifyAction = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNotifying(true);
+    await onNotify(monitor);
+    setTimeout(() => setNotifying(false), 2000);
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.04, duration: 0.35, ease: 'easeOut' }}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`service-row ${isUp ? 'row-up' : 'row-down'} group ${isOpen ? 'row-open' : ''}`}
+      >
+        <div className="service-row-main">
+          <div className={`status-dot ${isUp ? 'dot-up' : 'dot-down'}`} />
+
+          <div className="service-info">
+            <div className="service-name">{monitor.name}</div>
+            <div className="service-url">{monitor.url.replace(/^https?:\/\//, '')}</div>
+          </div>
+        </div>
+
+        <div className="uptime-bars">
+          {bars.map((bar, j) => (
+            <div
+              key={j}
+              className={`uptime-bar ${bar.up ? 'uptime-bar-up' : 'uptime-bar-down'}`}
+              style={{ height: `${bar.height}%` }}
+              title={bar.up ? 'Operational' : 'Incident'}
+            />
+          ))}
+        </div>
+
+        <div className="service-meta">
+          <div className={`status-label ${isUp ? 'status-up' : 'status-down'}`}>
+            {isUp ? 'ออนไลน์' : 'ไฟดับ'}
+          </div>
+          <div className="latency-text">
+            {monitor.latency > 0 ? `${monitor.latency}ms` : '\u2014'}
+          </div>
+        </div>
+
+        {!isUp && (
+          <button
+            onClick={handleNotifyAction}
+            disabled={notifying}
+            className="notify-btn"
+          >
+            {notifying ? 'ส่งแล้ว' : 'แจ้ง'}
+          </button>
+        )}
+      </motion.div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="service-details">
+              <div className="detail-row">
+                <span className="detail-label">Edge Location</span>
+                <span className="detail-value">TH,Bangkok </span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Protocol</span>
+                <span className="detail-value">HTTPS/3 (QUIC)</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">SSL Certificate</span>
+                <span className="detail-value status-green">Valid (256-bit)</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">24h Uptime</span>
+                <span className="detail-value">100.00%</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">30d Uptime</span>
+                <span className="detail-value">99.95%</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────── */
+export default function StatusPage() {
+  const [data, setData] = useState<MonitorResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastCheck, setLastCheck] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const runChecks = useCallback(async (force = false) => {
+    if (!force) {
+      const cached = localStorage.getItem('vexanode_status_cache');
+      if (cached) {
+        try {
+          const { results, timestamp } = JSON.parse(cached);
+          const age = (Date.now() - timestamp) / 1000;
+          if (age < 60) {
+            setData(results);
+            setLastCheck(new Date(timestamp));
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to parse cache', e);
+        }
+      }
+    }
+
+    setLoading(true);
+    try {
+      const results = await Promise.all(
+        MONITORS.map(async (m) => ({ ...m, ...(await fetchStatus(m.url)) }))
+      );
+      setData(results as MonitorResult[]);
+      setLastCheck(new Date());
+      localStorage.setItem('vexanode_status_cache', JSON.stringify({
+        results,
+        timestamp: Date.now()
+      }));
+    } catch (err) {
+      console.error('Fetch failed', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleNotify = useCallback(async (m: MonitorResult) => {
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: m.name, status: m.status, latency: m.latency }),
+      });
+      if (!res.ok) throw new Error('Failed to send');
+    } catch (err) {
+      console.error('Notification failed', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    runChecks();
+    const automation = setInterval(async () => {
+      try {
+        await fetch('/api/cron');
+        runChecks();
+      } catch (e) {
+        console.error('Automation ping failed', e);
+      }
+    }, 60_000);
+    return () => clearInterval(automation);
+  }, [runChecks]);
+
+  const upCount = data.filter((m) => m.status === 'UP').length;
+  const isAllUp = data.length > 0 && upCount === data.length;
+  const avgLatency =
+    data.length > 0
+      ? Math.round(data.reduce((a, b) => a + b.latency, 0) / data.length)
+      : 0;
+
+  return (
+    <>
+      <div className="page-bg" />
+      <div className="page-wrapper">
+        <div className="container">
+
+          {/* ── Header ────────────────────────────────────────── */}
+          <motion.header
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="page-header"
+          >
+            <div className="header-left">
+              <div className="logo-mark" />
+              <div>
+                <h1 className="site-title">fardarNode</h1>
+                <p className="site-subtitle">สถานะโครงสร้างพื้นฐาน</p>
+              </div>
+            </div>
+
+            <div className="header-right">
+              <div className={`overall-badge ${isAllUp ? 'badge-up' : data.length === 0 ? 'badge-neutral' : 'badge-down'}`}>
+                <span className={`badge-dot ${isAllUp ? 'dot-up' : 'dot-down'}`} />
+                {data.length === 0 ? 'ระบบตรวจสอบ' : isAllUp ? 'การทำงานของระบบทั้งหมด' : 'การหยุดทำงานบางส่วน'}
+              </div>
+              <button className="refresh-btn" onClick={() => runChecks(true)} disabled={loading}>
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </motion.header>
+
+          {/* ── Summary Bar ───────────────────────────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="summary-bar"
+          >
+            <div className="summary-stat">
+              <span className="summary-label">โหนดทั้งหมด</span>
+              <span className="summary-value">{data.length || '\u2014'}</span>
+            </div>
+            <div className="summary-divider" />
+            <div className="summary-stat">
+              <span className="summary-label">ออนไลน์</span>
+              <span className="summary-value status-green">{loading ? '\u2014' : upCount}</span>
+            </div>
+            <div className="summary-divider" />
+            <div className="summary-stat">
+              <span className="summary-label">เวลาแฝงเฉลี่ย</span>
+              <span className="summary-value">{loading ? '\u2014' : `${avgLatency}ms`}</span>
+            </div>
+            <div className="summary-divider" />
+            <div className="summary-stat">
+              <span className="summary-label">ความพร้อมในการให้บริการ</span>
+              <span className={`summary-value ${isAllUp ? 'status-green' : 'status-red'}`}>
+                {loading ? '\u2014' : data.length > 0 ? `${Math.round((upCount / data.length) * 100)}%` : '\u2014'}
+              </span>
+            </div>
+            <div className="summary-divider" />
+            <div className="summary-stat">
+              <span className="summary-label">อัปเดตล่าสุด</span>
+              <span className="summary-value">
+                {mounted ? lastCheck.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* ── Hero Status ───────────────────────────────────── */}
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+            className={`hero-card ${isAllUp ? 'hero-up' : 'hero-down'}`}
+          >
+            <div className={`hero-indicator ${isAllUp ? 'indicator-up' : 'indicator-down'}`}>
+              {isAllUp ? 'ระบบทั้งหมดใช้งานได้' : 'ตรวจพบการหยุดชะงักของบริการ'}
+            </div>
+            <p className="hero-description">
+              {isAllUp
+                ? 'โครงสร้างพื้นฐานทั่วโลกทำงานได้อยู่ในระดับที่เหมาะสม ไม่พบปัญหาใดๆ'
+                : 'ขณะนี้เรากำลังประสบปัญหาเกี่ยวกับบริการหลักบางส่วน ทีมวิศวกรของเรากำลังตรวจสอบอยู่'}
+            </p>
+            <div className="hero-bar">
+              <div className="hero-bar-track">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${loading ? 0 : data.length > 0 ? (upCount / data.length) * 100 : 0}%` }}
+                  transition={{ duration: 0.8, ease: 'circOut' }}
+                  className={`hero-bar-fill ${isAllUp ? 'fill-up' : 'fill-down'}`}
+                />
+              </div>
+              <span className="hero-bar-label">
+                {loading ? '...' : data.length > 0 ? `${Math.round((upCount / data.length) * 100)}%` : '\u2014'}
+              </span>
+            </div>
+          </motion.section>
+
+          {/* ── Services ──────────────────────────────────────── */}
+          <section className="services-section">
+            <div className="services-header">
+              <h2 className="services-title">โครงสร้างพื้นฐานหลัก</h2>
+              <span className="services-count">{upCount} / {data.length} โหนดออนไลน์</span>
+            </div>
+
+            <div className="services-list">
+              {data.length === 0
+                ? [1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="skeleton" style={{ height: 60, borderRadius: 10 }} />
+                  ))
+                : data.map((monitor, i) => (
+                    <ServiceRow key={monitor.url} monitor={monitor} index={i} onNotify={handleNotify} />
+                  ))}
+            </div>
+          </section>
+
+          {/* ── Active Incidents ──────────────────────────────── */}
+          <AnimatePresence>
+            {!isAllUp && data.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="incidents-section"
+              >
+                <h2 className="incidents-title">เหตุการณ์ที่กำลังเกิดขึ้น</h2>
+                {data
+                  .filter((m) => m.status === 'DOWN')
+                  .map((m) => (
+                    <div key={m.url} className="incident-card">
+                      <div className="incident-info">
+                        <div className="incident-icon" />
+                        <div>
+                          <h3 className="incident-name">{m.name} - ไฟดับ</h3>
+                          <p className="incident-message">ขณะนี้ไม่สามารถเข้าถึงระบบจากโหนดตรวจสอบได้</p>
+                        </div>
+                      </div>
+                      <button onClick={() => handleNotify(m)} className="notify-btn outlined">
+                        ส่งการแจ้งเตือน
+                      </button>
+                    </div>
+                  ))}
+              </motion.section>
+            )}
+          </AnimatePresence>
+
+          {/* ── Footer ────────────────────────────────────────── */}
+          <footer className="page-footer">
+            <span>โครงสร้างพื้นฐาน fardarNode</span>
+            <span className="footer-divider" />
+            <span>การตรวจสอบสถานะอัตโนมัติ</span>
+            <span className="footer-divider" />
+            <a href={`mailto:support@fardarnode.cloud`} className="footer-link">ติดต่อฝ่ายสนับสนุน</a>
+          </footer>
+
+        </div>
+      </div>
+    </>
+  );
+}

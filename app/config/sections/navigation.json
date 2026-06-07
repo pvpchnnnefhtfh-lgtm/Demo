@@ -1,0 +1,195 @@
+{
+  "mainNavigation": [
+    {
+      "name": "ผลิตภัณฑ์",
+      "href": "#",
+      "hasDropdown": true,
+      "isMegaMenu": true,
+      "megaMenuSections": [
+        {
+          "title": "โฮสติ้งคอมพิวต์",
+          "items": [
+            {
+              "name": "VPS คลาวด์ทั่วโลก",
+              "description": "เซิร์ฟเวอร์เสมือนประสิทธิภาพสูง",
+              "href": "/vps",
+              "icon": "Server"
+            },
+            {
+              "name": "ป้องกัน DDoS อินเดีย",
+              "description": "โหนดขับเคลื่อนด้วย OVH ระดับพรีเมียม",
+              "href": "/vps",
+              "icon": "Shield"
+            },
+            {
+              "name": "เซิร์ฟเวอร์ Dedicated",
+              "description": "เซิร์ฟเวอร์ bare metal ที่ทรงพลัง",
+              "href": "/dedicated",
+              "icon": "GrServerCluster"
+            },
+            {
+              "name": "ฐานข้อมูลจัดการ",
+              "description": "โฮสติ้ง SQL, MongoDB และ Redis",
+              "href": "/databases",
+              "icon": "Database"
+            }
+          ]
+        },
+        {
+          "title": "โฮสติ้งเกม",
+          "items": [
+            {
+              "name": "โฮสติ้ง Minecraft",
+              "description": "เล่นกับเพื่อน ๆ ของคุณ",
+              "href": "/games?game=minecraft",
+              "icon": "Gamepad2"
+            },
+            {
+              "name": "โฮสติ้งบอท",
+              "description": "โฮสติ้งที่เชื่อถือได้สำหรับบอทของคุณ",
+              "href": "/discord",
+              "icon": "FaDiscord"
+            },
+            {
+              "name": "โฮสติ้ง Lavalink",
+              "description": "โหนดเสียงประสิทธิภาพสูง",
+              "href": "/lavalink",
+              "icon": "Music"
+            }
+          ]
+        },
+        {
+          "title": "ความปลอดภัยและข่าวสาร",
+          "items": [
+            {
+              "name": "ป้องกัน DDoS",
+              "description": "การลดผลกระทบ DDoS ระดับสูง",
+              "href": "/ddos",
+              "icon": "Shield"
+            },
+            {
+              "name": "บล็อกบริษัท",
+              "description": "ข่าวสารและอัปเดตล่าสุด",
+              "href": "/blogs",
+              "icon": "FileText"
+            },
+            {
+              "name": "เอกสารประกอบ",
+              "description": "คู่มือและเอกสารทางเทคนิค",
+              "href": "/docs",
+              "icon": "FileText"
+            },
+            {
+              "name": "ชื่อโดเมน",
+              "description": "จดทะเบียนโดเมนในฝันของคุณ",
+              "href": "/domains",
+              "icon": "Globe"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "กฎหมาย",
+      "href": "#",
+      "hasDropdown": true,
+      "dropdownType": "list",
+      "dropdownItems": [
+        {
+          "name": "ข้อกำหนดการให้บริการ",
+          "href": "/terms-of-services",
+          "description": "ข้อตกลงการให้บริการของเรา"
+        },
+        {
+          "name": "นโยบายความเป็นส่วนตัว",
+          "href": "/privacy-policy",
+          "description": "นโยบายการคุ้มครองข้อมูล"
+        },
+        {
+          "name": "นโยบายการคืนเงิน",
+          "href": "/refund-policy",
+          "description": "การคืนเงินและคุณสมบัติการคืนเงิน"
+        },
+        {
+          "name": "SLA",
+          "href": "/sla",
+          "description": "Service Level Agreement"
+        },
+        {
+          "name": "นโยบายการใช้งานที่ยอมรับได้",
+          "href": "/aup",
+          "description": "แนวทางการใช้งานอย่างเป็นธรรม"
+        },
+        {
+          "name": "นโยบายการใช้งานอย่างเป็นธรรม",
+          "href": "/fup",
+          "description": "นโยบายการจัดสรรทรัพยากร"
+        }
+      ]
+    },
+    {
+      "name": "บริษัท",
+      "href": "#",
+      "hasDropdown": true,
+      "dropdownType": "list",
+      "dropdownItems": [
+        {
+          "name": "ทีมงาน",
+          "href": "/team",
+          "description": "พบกับทีมผู้บริหารของเรา"
+        },
+        {
+          "name": "พาร์ทเนอร์",
+          "href": "/partners",
+          "description": "ระบบนิเวศที่เราเชื่อถือ"
+        },
+        {
+          "name": "โปรแกรมพันธมิตร",
+          "href": "/affiliates",
+          "description": "รับค่าคอมมิชชั่นแบบต่อเนื่อง"
+        },
+        {
+          "name": "เกี่ยวกับเรา",
+          "href": "/about",
+          "description": "เรียนรู้เกี่ยวกับ FARDARCLOUD"
+        },
+        {
+          "name": "ติดต่อเรา",
+          "href": "/contact",
+          "description": "ติดต่อเราได้ทันที"
+        }
+      ]
+    },
+    {
+      "name": "สถานะ",
+      "href": "https://status.faydarth.eu.cc",
+      "hasDropdown": false,
+      "showStatusDot": true
+    }
+  ],
+  "socialLinks": [
+    {
+      "name": "Discord",
+      "href": "#",
+      "icon": "discord"
+    }
+  ],
+  "clientSpace": {
+    "name": "แดชบอร์ด",
+    "href": "/dashboard",
+    "icon": "User",
+    "style": "primary-purple"
+  },
+  "loginLink": {
+    "name": "เข้าสู่ระบบ",
+    "href": "/login"
+  },
+  "banner": {
+    "show": true,
+    "text": "ลดราคาแบบพิเศษกำลังเปิด!",
+    "couponCode": "VEXA20",
+    "style": "primary-purple",
+    "backgroundColor": "#1e40af",
+    "fallbackColor": "#1e3a8a"
+  }
+}

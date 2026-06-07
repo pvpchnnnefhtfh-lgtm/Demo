@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Verify build",
+			"type": "process",
+			"command": "npm.cmd",
+			"args": ["run", "build"],
+			"options": {
+				"cwd": "g:\\VexaNode-main"
+			},
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
