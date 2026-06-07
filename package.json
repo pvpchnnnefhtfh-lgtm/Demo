@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node ./node_modules/next/dist/bin/next dev --turbopack",
+    "dev": "node ./node_modules/next/dist/bin/next dev --turbopack -p 80",
     "build": "node ./node_modules/next/dist/bin/next build",
-    "start": "node ./node_modules/next/dist/bin/next start -p 3000",
+    "start": "node ./node_modules/next/dist/bin/next start -p 80",
     "lint": "node ./node_modules/eslint/bin/eslint.js ."
   },
   "dependencies": {
